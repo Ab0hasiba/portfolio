@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Contact System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .messages-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        .message-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .message-header {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        .message-meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .export-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Local Contact System</h1>
+        <p>This system stores contact form submissions locally in your browser. No external services required!</p>
+        
+        <form id="contactForm">
+            <div class="form-group">
+                <label for="name">Your Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Your Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="subject">Subject:</label>
+                <input type="text" id="subject" name="subject" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" rows="5" required></textarea>
+            </div>
+            
+            <button type="submit" id="submitBtn">Save Message</button>
+            <button type="button" id="clearBtn">Clear All Messages</button>
+        </form>
+        
+        <div id="result"></div>
+        
+        <div class="export-section">
+            <h3>📤 Export Messages</h3>
+            <button type="button" id="exportBtn">Download as JSON</button>
+            <button type="button" id="exportTxtBtn">Download as Text</button>
+            <button type="button" id="copyBtn">Copy to Clipboard</button>
+        </div>
+        
+        <div class="messages-section">
+            <h3>📋 Stored Messages</h3>
+            <div id="messagesList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Storage key for messages
+        const STORAGE_KEY = 'portfolio_contact_messages';
+        
+        // Load messages from localStorage
+        function loadMessages() {
+            const messages = localStorage.getItem(STORAGE_KEY);
+            return messages ? JSON.parse(messages) : [];
+        }
+        
+        // Save messages to localStorage
+        function saveMessages(messages) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+        }
+        
+        // Add a new message
+        function addMessage(name, email, subject, message) {
+            const messages = loadMessages();
+            const newMessage = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                name: name,
+                email: email,
+                subject: subject,
+                message: message
+            };
+            messages.unshift(newMessage); // Add to beginning
+            saveMessages(messages);
+            displayMessages();
+            return newMessage;
+        }
+        
+        // Display all messages
+        function displayMessages() {
+            const messages = loadMessages();
+            const messagesList = document.getElementById('messagesList');
+            
+            if (messages.length === 0) {
+                messagesList.innerHTML = '<p>No messages stored yet.</p>';
+                return;
+            }
+            
+            messagesList.innerHTML = messages.map(msg => `
+                <div class="message-item">
+                    <div class="message-header">${msg.subject}</div>
+                    <div class="message-meta">
+                        From: ${msg.name} (${msg.email}) - ${new Date(msg.timestamp).toLocaleString()}
+                    </div>
+                    <div>${msg.message}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Export messages as JSON
+        function exportAsJSON() {
+            const messages = loadMessages();
+            const dataStr = JSON.stringify(messages, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `contact_messages_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Export messages as text
+        function exportAsText() {
+            const messages = loadMessages();
+            const textContent = messages.map(msg => `
+${'='.repeat(60)}
+NEW CONTACT FORM SUBMISSION
+${'='.repeat(60)}
+Date: ${new Date(msg.timestamp).toLocaleString()}
+Name: ${msg.name}
+Email: ${msg.email}
+Subject: ${msg.subject}
+
+Message:
+${msg.message}
+
+${'='.repeat(60)}
+            `).join('\n');
+            
+            const dataBlob = new Blob([textContent], {type: 'text/plain'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `contact_messages_${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Copy messages to clipboard
+        async function copyToClipboard() {
+            const messages = loadMessages();
+            const textContent = messages.map(msg => 
+                `${msg.name} (${msg.email}) - ${msg.subject}\n${msg.message}\n${'='.repeat(40)}`
+            ).join('\n\n');
+            
+            try {
+                await navigator.clipboard.writeText(textContent);
+                alert('Messages copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy to clipboard');
+            }
+        }
+        
+        // Form submission handler
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const subject = document.getElementById('subject').value.trim();
+            const message = document.getElementById('message').value.trim();
+            
+            // Validation
+            if (!name || !email || !subject || !message) {
+                document.getElementById('result').innerHTML = 
+                    '<div class="result error">❌ Please fill in all fields</div>';
+                return;
+            }
+            
+            // Email validation
+            if (!email.includes('@') || !email.includes('.')) {
+                document.getElementById('result').innerHTML = 
+                    '<div class="result error">❌ Please enter a valid email address</div>';
+                return;
+            }
+            
+            // Add message
+            addMessage(name, email, subject, message);
+            
+            // Show success message
+            document.getElementById('result').innerHTML = 
+                '<div class="result success">✅ Message saved successfully!</div>';
+            
+            // Clear form
+            document.getElementById('contactForm').reset();
+        });
+        
+        // Clear all messages
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all messages?')) {
+                localStorage.removeItem(STORAGE_KEY);
+                displayMessages();
+                document.getElementById('result').innerHTML = 
+                    '<div class="result success">✅ All messages cleared</div>';
+            }
+        });
+        
+        // Export buttons
+        document.getElementById('exportBtn').addEventListener('click', exportAsJSON);
+        document.getElementById('exportTxtBtn').addEventListener('click', exportAsText);
+        document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+        
+        // Initialize display
+        displayMessages();
+    </script>
+</body>
+</html>

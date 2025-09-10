@@ -64,6 +64,7 @@ const observer = new IntersectionObserver((entries) => {
         }
     });
 }, observerOptions);
+  
 
 // Observe elements for animation
 document.addEventListener('DOMContentLoaded', () => {
@@ -74,11 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // Form handling
 const contactForm = document.querySelector('.contact-form form');
 if (contactForm) {
-    contactForm.addEventListener('submit', function(e) {
+    contactForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         // Get form data
-        const formData = new FormData(this);
         const name = this.querySelector('input[type="text"]').value;
         const email = this.querySelector('input[type="email"]').value;
         const subject = this.querySelectorAll('input[type="text"]')[1].value;
@@ -97,20 +97,35 @@ if (contactForm) {
             return;
         }
         
-        // Simulate form submission (replace with actual form handling)
         const submitButton = this.querySelector('button[type="submit"]');
         const originalText = submitButton.textContent;
         
         submitButton.textContent = 'Sending...';
         submitButton.disabled = true;
         
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            // Store message locally (no external services needed)
+            const messages = JSON.parse(localStorage.getItem('portfolio_contact_messages') || '[]');
+            const newMessage = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                name: name,
+                email: email,
+                subject: subject,
+                message: message
+            };
+            messages.unshift(newMessage);
+            localStorage.setItem('portfolio_contact_messages', JSON.stringify(messages));
+            
             alert('Thank you for your message! I\'ll get back to you soon.');
             this.reset();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Sorry, there was an error saving your message. Please try again.');
+        } finally {
             submitButton.textContent = originalText;
             submitButton.disabled = false;
-        }, 2000);
+        }
     });
 }
 

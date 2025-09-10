@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmailJS Contact Form</title>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .setup-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>📧 EmailJS Contact Form</h1>
+        
+        <div class="setup-info">
+            <h3>🔧 Setup Required:</h3>
+            <ol>
+                <li>Go to <a href="https://www.emailjs.com" target="_blank">EmailJS.com</a></li>
+                <li>Create a free account</li>
+                <li>Add your Gmail service</li>
+                <li>Create an email template</li>
+                <li>Get your Public Key and Service ID</li>
+                <li>Update the JavaScript below with your credentials</li>
+            </ol>
+        </div>
+        
+        <form id="contactForm">
+            <div class="form-group">
+                <label for="name">Your Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Your Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="subject">Subject:</label>
+                <input type="text" id="subject" name="subject" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" rows="5" required></textarea>
+            </div>
+            
+            <button type="submit" id="submitBtn">Send Message</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Initialize EmailJS
+        emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your EmailJS public key
+        
+        document.getElementById('contactForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            
+            // Get form data
+            const formData = {
+                from_name: document.getElementById('name').value,
+                from_email: document.getElementById('email').value,
+                subject: document.getElementById('subject').value,
+                message: document.getElementById('message').value,
+                to_email: 'your-email@gmail.com' // Replace with your email
+            };
+            
+            // Update UI
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            resultDiv.innerHTML = '';
+            
+            try {
+                // Send email using EmailJS
+                const response = await emailjs.send(
+                    'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
+                    'YOUR_TEMPLATE_ID', // Replace with your EmailJS template ID
+                    formData
+                );
+                
+                if (response.status === 200) {
+                    resultDiv.innerHTML = '<div class="result success">✅ Message sent successfully!</div>';
+                    document.getElementById('contactForm').reset();
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ Failed to send message. Please try again.</div>';
+                }
+                
+            } catch (error) {
+                console.error('EmailJS Error:', error);
+                resultDiv.innerHTML = `<div class="result error">❌ Error: ${error.text || 'Failed to send message'}</div>`;
+            } finally {
+                submitBtn.textContent = 'Send Message';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
